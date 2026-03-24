@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MacWipe — Factory Reset Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --card: #161616;
+    --border: #2a2a2a;
+    --accent: #ff4d1c;
+    --accent2: #ff8c5a;
+    --text: #f0ede8;
+    --muted: #666;
+    --success: #00e5a0;
+    --warning: #ffd166;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.5;
+  }
+
+  /* Header */
+  header {
+    padding: 28px 40px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,10,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 50;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    background: rgba(255,77,28,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(255,77,28,0.3);
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+  }
+
+  /* Hero */
+  .hero {
+    padding: 80px 40px 60px;
+    max-width: 860px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .hero-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  h1 {
+    font-size: clamp(38px, 6vw, 64px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 20px;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--accent);
+    position: relative;
+  }
+
+  .hero p {
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 500px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+    font-weight: 400;
+  }
+
+  /* Warning banner */
+  .warning-banner {
+    background: rgba(255,209,102,0.08);
+    border: 1px solid rgba(255,209,102,0.25);
+    border-radius: 12px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 720px;
+    margin: 0 auto 60px;
+    text-align: left;
+  }
+
+  .warning-icon { font-size: 22px; flex-shrink: 0; }
+
+  .warning-text {
+    font-size: 13px;
+    color: var(--warning);
+    line-height: 1.6;
+  }
+
+  .warning-text strong { display: block; font-weight: 700; margin-bottom: 2px; }
+
+  /* Chip selector */
+  .chip-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 60px;
+    flex-wrap: wrap;
+  }
+
+  .chip {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 8px 18px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .chip:hover, .chip.active {
+    border-color: var(--accent);
+    color: var(--text);
+    background: rgba(255,77,28,0.1);
+  }
+
+  .chip.active { color: var(--accent); }
+
+  /* Steps */
+  .steps-container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 40px 100px;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .step {
+    display: flex;
+    gap: 28px;
+    margin-bottom: 12px;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp 0.5s ease forwards;
+  }
+
+  .step:nth-child(1) { animation-delay: 0.05s; }
+  .step:nth-child(2) { animation-delay: 0.1s; }
+  .step:nth-child(3) { animation-delay: 0.15s; }
+  .step:nth-child(4) { animation-delay: 0.2s; }
+  .step:nth-child(5) { animation-delay: 0.25s; }
+  .step:nth-child(6) { animation-delay: 0.3s; }
+  .step:nth-child(7) { animation-delay: 0.35s; }
+  .step:nth-child(8) { animation-delay: 0.4s; }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 48px;
+  }
+
+  .step-num {
+    width: 48px;
+    height: 48px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+
+  .step.done .step-num {
+    background: rgba(0,229,160,0.1);
+    border-color: var(--success);
+    color: var(--success);
+  }
+
+  .step-line {
+    width: 1px;
+    flex: 1;
+    background: var(--border);
+    margin: 8px 0;
+    min-height: 20px;
+  }
+
+  .step-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+    flex: 1;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .step-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .step-card:hover {
+    border-color: rgba(255,77,28,0.3);
+    transform: translateX(4px);
+  }
+
+  .step-card:hover::before { opacity: 1; }
+
+  .step.done .step-card {
+    border-color: rgba(0,229,160,0.2);
+    background: rgba(0,229,160,0.04);
+  }
+
+  .step.done .step-card::before {
+    background: var(--success);
+    opacity: 1;
+  }
+
+  .step-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .step-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .step-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .tag-critical {
+    background: rgba(255,77,28,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(255,77,28,0.2);
+  }
+
+  .tag-info {
+    background: rgba(255,209,102,0.1);
+    color: var(--warning);
+    border: 1px solid rgba(255,209,102,0.2);
+  }
+
+  .tag-system {
+    background: rgba(100,160,255,0.1);
+    color: #64a0ff;
+    border: 1px solid rgba(100,160,255,0.2);
+  }
+
+  .tag-done {
+    background: rgba(0,229,160,0.1);
+    color: var(--success);
+    border: 1px solid rgba(0,229,160,0.2);
+  }
+
+  .step-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    font-weight: 400;
+  }
+
+  .step-desc strong { color: var(--text); font-weight: 600; }
+
+  .code-block {
+    margin-top: 14px;
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    cursor: pointer;
+  }
+
+  .checkbox-row input[type=checkbox] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--success);
+    cursor: pointer;
+  }
+
+  .checkbox-label {
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    z-index: 50;
+    min-width: 280px;
+  }
+
+  .progress-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .progress-pct {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    white-space: nowrap;
+    min-width: 32px;
+  }
+
+  /* Mode panels (hidden by default) */
+  .mode-panel { display: none; }
+  .mode-panel.visible { display: block; }
+
+  @media (max-width: 600px) {
+    header { padding: 20px 20px; }
+    .hero { padding: 50px 20px 40px; }
+    .steps-container { padding: 0 20px 100px; }
+    .step { gap: 16px; }
+    .step-card { padding: 18px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⌘</div>
+    <div class="logo-text">Mac<span>Wipe</span></div>
+  </div>
+  <div class="badge">FACTORY RESET GUIDE</div>
+</header>
+
+<section class="hero">
+  <span class="hero-tag">Step-by-step walkthrough</span>
+  <h1>Wipe your Mac.<br><em>Clean slate.</em></h1>
+  <p>A complete guide to factory resetting your Mac — erasing all data, removing your Apple ID, and restoring macOS from scratch.</p>
+
+  <div class="warning-banner">
+    <div class="warning-icon">⚠️</div>
+    <div class="warning-text">
+      <strong>Back up before you begin</strong>
+      This process permanently deletes all files, apps, and personal data from your Mac. Make sure you have a complete backup via Time Machine or iCloud before proceeding.
+    </div>
+  </div>
+
+  <div class="chip-row">
+    <div class="chip active" onclick="switchMode('apple-silicon')">Apple Silicon (M1/M2/M3/M4)</div>
+    <div class="chip" onclick="switchMode('intel')">Intel Mac</div>
+  </div>
+</section>
+
+<!-- Apple Silicon Steps -->
+<div class="steps-container mode-panel visible" id="panel-apple-silicon">
+  <div class="section-label">Apple Silicon — Complete Reset Procedure</div>
+
+  <div class="step" id="s1">
+    <div class="step-left">
+      <div class="step-num">01</div>
+      <div class="step-line"></div>
+    </div>
+    <div>
+      <div class="step-card" onclick="toggleDone('s1')">
+        <div class="step-header">
+          <div class="step-title">Back Up Your Data</div>
+          <div class="step-tag tag-critical">CRITICAL</div>
+        </div>
+        <div class="step-desc">
+          Connect an external drive and open <strong>Time Machine</strong> (System Settings → General → Time Machine) to create a full backup. Alternatively, ensure iCloud Drive sync is complete. <strong>All data will be permanently erased</strong> — there is no undo.
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" onchange="updateProgress()">
+          <span class="checkbox-label">I have backed up my data</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="s2">
+    <div class="step-left">
+      <div class="step-num">02</div>
+      <div class="step-line"></div>
+    </div>
+    <div>
+      <div class="step-card" onclick="toggleDone('s2')">
+        <div class="step-header">
+          <div class="step-title">Sign Out of Apple ID & iCloud</div>
+          <div class="step-tag tag-critical">CRITICAL</div>
+        </div>
+        <div class="step-desc">
+          Go to <strong>System Settings → [Your Name]</strong>, scroll to the bottom and click <strong>Sign Out</strong>. Choose whether to keep a copy of iCloud data on this Mac. This removes Activation Lock so the next owner can set up the Mac. Also sign out of <strong>iMessage</strong> (Messages → Settings → iMessage → Sign Out).
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" onchange="updateProgress()">
+          <span class="checkbox-label">Signed out of Apple ID</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="s3">
+    <div class="step-left">
+      <div class="step-num">03</div>
+      <div class="step-line"></div>
+    </div>
+    <div>
+      <div class="step-card" onclick="toggleDone('s3')">
+        <div class="step-header">
+          <div class="step-title">Unpair Bluetooth Devices</div>
+          <div class="step-tag tag-info">OPTIONAL</div>
+        </div>
+        <div class="step-desc">
+          Go to <strong>System Settings → Bluetooth</strong>. Click the <strong>ⓘ</strong> next to each device and select <strong>Forget This Device</strong>. This is especially important if you're passing the Mac to someone else.
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" onchange="updateProgress()">
+          <span class="checkbox-label">Bluetooth devices unpaired</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="s4">
+    <div class="step-left">
+      <div class="step-num">04</div>
+      <div class="step-line"></div>
+    </div>
+    <div>
+      <div class="step-card" onclick="toggleDone('s4')">
+        <div class="step-header">
+          <div class="step-title">Use Erase All Content and Settings</div>
+          <div class="step-tag tag-system">MACOS 12+</div>
+        </div>
+        <div class="step-desc">
+          On <strong>macOS Monterey or later</strong>, go to <strong>System Settings → General → Transfer or Reset → Erase All Content and Settings</strong>. Enter your admin password and Apple ID password when prompted. The Mac will erase itself and reboot to the Setup Assistant automatically. <br><br><strong>This is the easiest method for Apple Silicon Macs.</strong>
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" onchange="updateProgress()">
+          <span class="checkbox-label">Erase initiated from System Settings</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="s5">
+    <div class="step-left">
+      <div class="step-num">05</div>
+      <div class="step-line"></div>
+    </div>
+    <div>
+      <div class="step-card" onclick="toggleDone('s5')">
+        <div class="step-header">
+          <div class="step-title">Alternative: Boot into Recovery Mode</div>
+          <div class="step-tag tag-system">IF NEEDED</div>
+        </div>
+        <div class="step-desc">
+          If you can't access System Settings, <strong>shut down</strong> the Mac completely. Then press and hold the <strong>Power button</strong> until you see "Loading startup options." Click <strong>Options → Continue</strong> to enter macOS Recovery. From the Recovery menu, choose <strong>Disk Utility</strong> to erase the drive, then use <strong>Reinstall macOS</strong>.
+        </div>
+        <div class="code-block">
+          <span>Power Button (hold) → Options → Continue → Disk Utility / Reinstall macOS</span>
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" onchange="updateProgress()">
+          <span class="checkbox-label">Recovery mode accessed (if needed)</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="s6">
+    <div class="step-left">
+      <div class="step-num">06</div>
+      <div class="step-line"></div>
+    </div>
+    <div>
+      <div class="step-card" onclick="toggleDone('s6')">
+        <div class="step-header">
+          <div class="step-title">Erase the Disk (in Disk Utility)</div>
+          <div class="step-tag tag-critical">IN RECOVERY</div>
+        </div>
+        <div class="step-desc">
+          In Disk Utility, select <strong>Macintosh HD</strong> in the sidebar (View → Show All Devices). Click <strong>Erase</strong>, set the format to <strong>APFS</strong>, and confirm. After erasing, also delete the <strong>Macintosh HD - Data</strong> volume if present. Then quit Disk Utility to return to the Recovery menu.
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" onchange="updateProgress()">
+          <span class="checkbox-label">Drive erased in Disk Utility</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="s7">
+    <div class="step-left">
+      <div class="step-num">07</div>
+      <div class="step-line"></div>
+    </div>
+    <div>
+      <div class="step-card" onclick="toggleDone('s7')">
+        <div class="step-header">
+          <div class="step-title">Reinstall macOS</div>
+          <div class="step-tag tag-system">SYSTEM</div>
+        </div>
+        <div class="step-desc">
+          From the Recovery menu, select <strong>Reinstall macOS</strong> (the version shown will be the latest compatible with your Mac). Connect to Wi-Fi when prompted. The download and installation will take 30–60 minutes. The Mac will restart several times — <strong>do not interrupt power</strong> during this process.
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" onchange="updateProgress()">
+          <span class="checkbox-label">macOS reinstallation started</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="s8">
+    <div class="step-left">
+      <div class="step-num">08</div>
+    </div>
+    <div>
+      <div class="step-card" onclick="toggleDone('s8')">
+        <div class="step-header">
+          <div class="step-title">Complete Setup or Hand Off</div>
+          <div class="step-tag tag-info">FINAL STEP</div>
+        </div>
+        <div class="step-desc">
+          After reinstallation, the Mac boots to the <strong>Hello / Setup Assistant</strong> screen — exactly as it was when new. If keeping the Mac yourself, follow the prompts to sign in with your Apple ID and restore from your backup. If giving the Mac away, leave this screen for the new owner to complete setup with their own Apple ID.
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" onchange="updateProgress()">
+          <span class="checkbox-label">Reset complete ✓</span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Intel Steps -->
+<div class="steps-container mode-panel" id="panel-intel">
+  <div class="section-label">Intel Mac — Complete Reset Procedure</div>
+
+  <div class="step" id="i1">
+    <div class="step-left"><div class="step-num">01</div><div class="step-line"></div></div>
+    <div>
+      <div class="step-card" onclick="toggleDone('i1')">
+        <div class="step-header">
+          <div class="step-title">Back Up Your Data</div>
+          <div class="step-tag tag-critical">CRITICAL</div>
+        </div>
+        <div class="step-desc">Use <strong>Time Machine</strong> or iCloud to back up all files before proceeding. All data will be permanently destroyed.</div>
+        <label class="checkbox-row"><input type="checkbox" onchange="updateProgress()"><span class="checkbox-label">Data backed up</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="i2">
+    <div class="step-left"><div class="step-num">02</div><div class="step-line"></div></div>
+    <div>
+      <div class="step-card" onclick="toggleDone('i2')">
+        <div class="step-header">
+          <div class="step-title">Sign Out of Apple ID & iMessage</div>
+          <div class="step-tag tag-critical">CRITICAL</div>
+        </div>
+        <div class="step-desc">Go to <strong>System Preferences → Apple ID → Overview → Sign Out</strong>. Also open <strong>Messages → Preferences → iMessage → Sign Out</strong>.</div>
+        <label class="checkbox-row"><input type="checkbox" onchange="updateProgress()"><span class="checkbox-label">Signed out of Apple ID</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="i3">
+    <div class="step-left"><div class="step-num">03</div><div class="step-line"></div></div>
+    <div>
+      <div class="step-card" onclick="toggleDone('i3')">
+        <div class="step-header">
+          <div class="step-title">Boot into macOS Recovery</div>
+          <div class="step-tag tag-system">KEY COMBO</div>
+        </div>
+        <div class="step-desc">
+          Restart your Mac. Immediately hold <strong>⌘ Command + R</strong> until you see the Apple logo or a spinning globe. This boots into macOS Recovery. On some Macs, holding <strong>Option/Alt</strong> shows a boot picker.
+        </div>
+        <div class="code-block">
+          <span>Restart → Hold ⌘ + R immediately</span>
+          <button class="copy-btn" onclick="copyText(this,'Restart → Hold ⌘ + R immediately')">COPY</button>
+        </div>
+        <label class="checkbox-row"><input type="checkbox" onchange="updateProgress()"><span class="checkbox-label">In Recovery mode</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="i4">
+    <div class="step-left"><div class="step-num">04</div><div class="step-line"></div></div>
+    <div>
+      <div class="step-card" onclick="toggleDone('i4')">
+        <div class="step-header">
+          <div class="step-title">Open Disk Utility & Erase</div>
+          <div class="step-tag tag-critical">ERASE DISK</div>
+        </div>
+        <div class="step-desc">In Recovery, open <strong>Disk Utility</strong>. Click <strong>View → Show All Devices</strong>. Select <strong>Macintosh HD</strong> and click <strong>Erase</strong>. Format: <strong>APFS</strong> (or Mac OS Extended Journaled for older macOS). Click Erase Volume Group or Erase.</div>
+        <label class="checkbox-row"><input type="checkbox" onchange="updateProgress()"><span class="checkbox-label">Drive erased</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="i5">
+    <div class="step-left"><div class="step-num">05</div><div class="step-line"></div></div>
+    <div>
+      <div class="step-card" onclick="toggleDone('i5')">
+        <div class="step-header">
+          <div class="step-title">Reinstall macOS</div>
+          <div class="step-tag tag-system">SYSTEM</div>
+        </div>
+        <div class="step-desc">Quit Disk Utility. Back in Recovery, select <strong>Reinstall macOS</strong>. Connect to Wi-Fi. The installer will download macOS and install it. The Mac will restart multiple times — keep it plugged in and don't interrupt.</div>
+        <label class="checkbox-row"><input type="checkbox" onchange="updateProgress()"><span class="checkbox-label">macOS reinstalling</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="i6">
+    <div class="step-left"><div class="step-num">06</div></div>
+    <div>
+      <div class="step-card" onclick="toggleDone('i6')">
+        <div class="step-header">
+          <div class="step-title">Complete Setup or Hand Off</div>
+          <div class="step-tag tag-info">FINAL STEP</div>
+        </div>
+        <div class="step-desc">Once complete, the Mac shows the <strong>Hello</strong> setup screen. Sign in or leave for the next user. Your Mac is now fully wiped and reset to factory condition.</div>
+        <label class="checkbox-row"><input type="checkbox" onchange="updateProgress()"><span class="checkbox-label">Reset complete ✓</span></label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress Bar -->
+<div class="progress-wrap">
+  <span class="progress-label">PROGRESS</span>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <span class="progress-pct" id="progressPct">0%</span>
+</div>
+
+<script>
+  let currentMode = 'apple-silicon';
+
+  function switchMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    event.target.classList.add('active');
+    document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('visible'));
+    document.getElementById('panel-' + mode).classList.add('visible');
+    updateProgress();
+  }
+
+  function toggleDone(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('done');
+    // Also check the checkbox
+    const cb = el.querySelector('input[type=checkbox]');
+    if (cb) cb.checked = el.classList.contains('done');
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const panel = document.getElementById('panel-' + currentMode);
+    const checkboxes = panel.querySelectorAll('input[type=checkbox]');
+    const checked = panel.querySelectorAll('input[type=checkbox]:checked').length;
+    const total = checkboxes.length;
+    const pct = total ? Math.round((checked / total) * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressPct').textContent = pct + '%';
+    // Sync step done state with checkboxes
+    checkboxes.forEach(cb => {
+      const step = cb.closest('.step');
+      if (step) step.classList.toggle('done', cb.checked);
+    });
+  }
+
+  function copyText(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'COPIED!';
+      setTimeout(() => btn.textContent = 'COPY', 2000);
+    });
+  }
+</script>
+</body>
+</html>
